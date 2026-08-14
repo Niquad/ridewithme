@@ -86,3 +86,7 @@ export function formatPrice(price: number, listingType: ListingType): string {
   if (listingType === "lease") return `${amount}/mo`;
   return amount;
 }
+
+export function getVehicleById(vehicles: Vehicle[], id: string): Vehicle | undefined {
+  return vehicles.find((v) => v.id === id);
+}

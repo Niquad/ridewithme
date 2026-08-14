@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react'
-import { APP_NAME, MOCK_VEHICLES, filterVehicles, formatPrice, type ListingType } from '@ridewithme/shared'
+import {
+  MOCK_VEHICLES,
+  filterVehicles,
+  formatPrice,
+  getVehicleById,
+  type ListingType,
+} from '@ridewithme/shared'
 import './App.css'
 
 const FILTER_TABS: { label: string; value: ListingType | 'all' }[] = [
@@ -10,9 +16,17 @@ const FILTER_TABS: { label: string; value: ListingType | 'all' }[] = [
   { label: 'Auction', value: 'auction' },
 ]
 
+const ACTION_LABEL: Record<ListingType, string> = {
+  buy: 'Buy Now',
+  rent: 'Rent This',
+  lease: 'Lease This',
+  auction: 'Place Bid',
+}
+
 function App() {
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState<ListingType | 'all'>('all')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const vehicles = useMemo(() => {
     return filterVehicles(MOCK_VEHICLES, {
@@ -21,10 +35,51 @@ function App() {
     })
   }, [query, activeFilter])
 
+  const selectedVehicle = selectedId ? getVehicleById(MOCK_VEHICLES, selectedId) : undefined
+
+  if (selectedVehicle) {
+    return (
+      <div className="app">
+        <button className="back-btn" onClick={() => setSelectedId(null)}>
+          ← Back to marketplace
+        </button>
+        <div className="detail">
+          <img className="detail-image" src={selectedVehicle.imageUrl} alt={`${selectedVehicle.make} ${selectedVehicle.model}`} />
+          <div className="detail-body">
+            <span className={`badge badge-${selectedVehicle.listingType}`}>{selectedVehicle.listingType}</span>
+            <h1 className="detail-title">{selectedVehicle.year} {selectedVehicle.make} {selectedVehicle.model}</h1>
+            <p className="detail-price">{formatPrice(selectedVehicle.price, selectedVehicle.listingType)}</p>
+
+            <div className="spec-grid">
+              <div className="spec">
+                <span className="spec-label">Mileage</span>
+                <span className="spec-value">{selectedVehicle.mileage.toLocaleString()} mi</span>
+              </div>
+              <div className="spec">
+                <span className="spec-label">Location</span>
+                <span className="spec-value">{selectedVehicle.location}</span>
+              </div>
+              <div className="spec">
+                <span className="spec-label">Year</span>
+                <span className="spec-value">{selectedVehicle.year}</span>
+              </div>
+              <div className="spec">
+                <span className="spec-label">Type</span>
+                <span className="spec-value">{selectedVehicle.listingType}</span>
+              </div>
+            </div>
+
+            <button className="action-btn">{ACTION_LABEL[selectedVehicle.listingType]}</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="app">
       <header className="header">
-        <h1>{APP_NAME}</h1>
+        <h1>Ride<span>WithMe</span></h1>
         <input
           className="search"
           type="text"
@@ -48,7 +103,7 @@ function App() {
 
       <div className="grid">
         {vehicles.map((v) => (
-          <div className="vehicle-card" key={v.id}>
+          <div className="vehicle-card" key={v.id} onClick={() => setSelectedId(v.id)}>
             <img src={v.imageUrl} alt={`${v.make} ${v.model}`} />
             <div className="vehicle-info">
               <h3>{v.year} {v.make} {v.model}</h3>
